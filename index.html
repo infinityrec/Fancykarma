@@ -2,90 +2,123 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reddit Karma Checker</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
+    /* تنسيق الجسم والخلفية */
     body {
-      background-color: #fafafa;
+      background: linear-gradient(135deg, #f6f9fc 0%, #eef2f3 100%);
       font-family: 'Poppins', sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
+      color: #333;
     }
+
+    /* تنسيق البطاقة */
     .card {
       background: white;
-      border-radius: 20px;
-      padding: 40px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+      border-radius: 24px;
+      padding: 50px 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08); /* ظل ناعم وحديث */
       text-align: center;
-      max-width: 400px;
+      max-width: 380px;
       width: 90%;
+      transform: translateY(0);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      animation: fadeIn 0.8s ease-out; /* حركة ظهور */
     }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.12);
+    }
+
+    /* تنسيق صورة الشعار */
     .card img {
-      width: 60px;
-      margin-bottom: 20px;
+      width: 70px;
+      margin-bottom: 25px;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
     }
+
+    /* العناوين والنصوص */
     h2 {
-      font-size: 24px;
-      margin: 0 0 10px;
+      font-size: 26px;
+      font-weight: 700;
+      margin: 0 0 12px;
+      color: #1a1a1b;
     }
+
     p {
-      font-size: 14px;
-      color: #555;
-      margin: 0 0 30px;
+      font-size: 15px;
+      color: #7c7c7c;
+      line-height: 1.6;
+      margin: 0 0 35px;
     }
+
+    /* تنسيق الزر المحسن */
     button {
-      background-color: #FF4500;
+      background: linear-gradient(45deg, #FF4500, #ff8717); /* تدرج لوني */
       color: white;
       border: none;
-      padding: 14px 28px;
+      padding: 16px 32px;
       font-size: 16px;
       font-weight: 600;
-      border-radius: 10px;
+      border-radius: 50px; /* جعل الزر دائري الحواف */
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      transition: background-color 0.3s ease;
+      gap: 12px;
+      box-shadow: 0 10px 20px rgba(255, 69, 0, 0.3); /* توهج برتقالي */
+      transition: all 0.3s ease;
+      outline: none;
+      width: 100%; /* الزر يأخذ عرض البطاقة */
     }
+
+    button:hover {
+      background: linear-gradient(45deg, #e03d00, #ff6b00);
+      box-shadow: 0 15px 30px rgba(255, 69, 0, 0.4);
+      transform: translateY(-2px);
+    }
+
     button:active {
-      background-color: #d63b00;
+      transform: translateY(1px);
+      box-shadow: 0 5px 10px rgba(255, 69, 0, 0.3);
     }
-    button::after {
-      content: '';
-      display: block;
-      position: absolute;
-      border-radius: 10px;
-      top: 0;
-      left: 0;
-      width: 0%;
-      height: 100%;
-      background: rgba(255,255,255,0.2);
-      transition: width 0.6s ease;
-      z-index: 0;
+
+    /* أيقونة القفل داخل الزر */
+    .icon-lock {
+      font-size: 18px;
     }
-    button:focus::after {
-      width: 100%;
+
+    /* حركة الظهور (Animation Keyframes) */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
+
   <div class="card">
-    <img src="https://redditinc.com/hs-fs/hubfs/Reddit%20Inc/Content/Brand%20Page/Reddit_Logo.png" alt="Reddit logo">
+    <img src="https://www.redditinc.com/assets/images/site/reddit-logo.png" alt="Reddit logo">
     <h2>Verification</h2>
-    <p>We need to first verify that you got the right<br>Karma, Account age.</p>
+    <p>To ensure quality, we need to quickly verify your Reddit <strong>Karma</strong> and <strong>Account Age</strong>.</p>
+    
     <button onclick="login()">
-      <span>:lock:</span> Login with Reddit
+      <span class="icon-lock">🔒</span> Login with Reddit
     </button>
   </div>
 
   <script>
     function login() {
-      const clientId = "70G0I__N4hh4F48tKem05A"; // Your actual Reddit client ID
-      const redirectUri = "https://nate0911.github.io/Fancykarma/redirect.html";
+      // نفس الكود البرمجي الخاص بك لم يتغير لضمان عمل الموقع
+      const clientId = "70G0I__N4hh4F48tKem05A"; 
+      const redirectUri = "https://infinityrec.github.io/Fancykarma/redirect.html";
       const state = Math.random().toString(36).substring(2);
       const scope = "identity history";
 
@@ -93,5 +126,6 @@
       window.location.href = authUrl;
     }
   </script>
+
 </body>
 </html>
