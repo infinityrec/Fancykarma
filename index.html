@@ -14,28 +14,31 @@
             height: 100vh;
             margin: 0;
         }
-        .card {
+        .container {
             background: white;
-            padding: 2rem;
+            padding: 2.5rem;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 400px;
             text-align: center;
         }
-        h2 {
-            margin-top: 0;
-            color: #1c1c1c;
-        }
+        h2 { margin-top: 0; color: #333; }
+        p { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        
         input {
             width: 100%;
             padding: 12px;
-            margin: 15px 0;
-            border: 1px solid #ccc;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
             border-radius: 6px;
-            box-sizing: border-box; /* Ensures padding doesn't break width */
             font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border 0.3s;
         }
+        input:focus { border-color: #ff4500; }
+
         button {
             width: 100%;
             padding: 12px;
@@ -46,124 +49,119 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background-color 0.2s;
         }
-        button:hover {
-            background-color: #e03d00;
-        }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-        #result {
+        button:hover { background-color: #e03d00; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        #message {
             margin-top: 20px;
-            font-weight: bold;
+            font-weight: 500;
             min-height: 24px;
         }
-        .error {
-            color: #d93025;
-        }
-        .success {
-            color: #188038;
-        }
-        .loading {
-            color: #666;
-        }
+        .error { color: #d93025; }
+        .success { color: #188038; }
+        .loading { color: #666; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Reddit Checker</h2>
-    <p>Check if account is > 8 months old and has > 200 Karma.</p>
+<div class="container">
+    <h2>Reddit Access Check</h2>
+    <p>Enter username to verify eligibility<br>(>200 Karma & >8 Months old)</p>
     
-    <input type="text" id="username" placeholder="Enter Reddit Username" autocomplete="off">
-    <button onclick="checkUser()" id="checkBtn">Check Account</button>
+    <input type="text" id="username" placeholder="Reddit Username (e.g. spez)" autocomplete="off">
+    <button onclick="checkUser()" id="btn">Verify Account</button>
     
-    <div id="result"></div>
+    <div id="message"></div>
 </div>
 
 <script>
+    // Configuration
     const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwt5A-DbeWVGD7xvNuMN5GxWimkPM-5g8I0me7P0OVWwB_m90ibCbeBij7Fb_yonaJ1/exec";
+    const MIN_KARMA = 200;
+    const MIN_AGE_DAYS = 240; // Approx 8 months
 
     async function checkUser() {
         const usernameInput = document.getElementById('username');
-        const resultDiv = document.getElementById('result');
-        const btn = document.getElementById('checkBtn');
-        
+        const msgDiv = document.getElementById('message');
+        const btn = document.getElementById('btn');
         const username = usernameInput.value.trim();
 
+        // Basic Validation
         if (!username) {
-            resultDiv.className = 'error';
-            resultDiv.innerText = "Please enter a username.";
+            showMessage("Please enter a username", "error");
             return;
         }
 
-        // UI Reset
-        resultDiv.className = 'loading';
-        resultDiv.innerText = "Checking...";
+        // Set Loading State
+        showMessage("Checking account details...", "loading");
         btn.disabled = true;
 
         try {
-            // We use a CORS Proxy (allorigins) to bypass Reddit's browser blocking
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.reddit.com/user/${username}/about.json`)}`;
-            
-            const response = await fetch(proxyUrl);
-            const dataWrapper = await response.json();
-            
-            // The proxy returns the actual Reddit data inside a "contents" string
-            if (!dataWrapper.contents) {
-                throw new Error("No data returned");
-            }
-            
-            const redditData = JSON.parse(dataWrapper.contents);
+            // Use CORS Proxy to bypass browser restrictions on Reddit API
+            // Reddit API URL: https://www.reddit.com/user/{username}/about.json
+            const targetUrl = `https://www.reddit.com/user/${username}/about.json`;
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
-            // Check if user exists (Reddit returns 'error' key if banned/not found)
+            const response = await fetch(proxyUrl);
+            const proxyData = await response.json();
+
+            if (!proxyData.contents) {
+                throw new Error("Network error via proxy");
+            }
+
+            // Parse the actual JSON returned by Reddit
+            const redditData = JSON.parse(proxyData.contents);
+
+            // Check if user exists (Reddit returns 'error' key if not found/banned)
             if (redditData.error || !redditData.data) {
-                resultDiv.className = 'error';
-                resultDiv.innerText = "your account not valable (User not found)";
+                showMessage("your account not valable", "error");
                 btn.disabled = false;
                 return;
             }
 
             const userData = redditData.data;
 
-            // 1. Get Stats
+            // 1. Get Karma (Link + Comment)
             const karma = userData.total_karma || 0;
-            const createdUtc = userData.created_utc;
 
             // 2. Calculate Age
-            const now = new Date();
-            const accountDate = new Date(createdUtc * 1000); // JS uses milliseconds
-            const ageInMs = now - accountDate;
-            const ageInDays = Math.floor(ageInMs / (1000 * 60 * 60 * 24));
+            // Reddit gives created_utc in seconds, JS needs milliseconds
+            const createdDate = new Date(userData.created_utc * 1000);
+            const today = new Date();
+            const ageInTime = today.getTime() - createdDate.getTime();
+            const ageInDays = Math.floor(ageInTime / (1000 * 3600 * 24));
 
-            console.log(`User: ${username}, Karma: ${karma}, Age: ${ageInDays} days`);
+            console.log(`User: ${username} | Karma: ${karma} | Age: ${ageInDays} days`);
 
-            // 3. Logic Check (>200 Karma AND >240 Days)
-            if (karma > 200 && ageInDays > 240) {
-                resultDiv.className = 'success';
-                resultDiv.innerText = ">> Valable! Redirecting...";
+            // 3. Logic Check
+            if (karma > MIN_KARMA && ageInDays > MIN_AGE_DAYS) {
+                showMessage(">> Valable! Redirecting...", "success");
                 
-                // Redirect after a short delay so user sees the success message
+                // Redirect after 1.5 seconds so user sees success message
                 setTimeout(() => {
                     window.location.href = WEBHOOK_URL;
-                }, 1000);
+                }, 1500);
             } else {
-                resultDiv.className = 'error';
-                resultDiv.innerText = "your account not valable";
+                showMessage("your account not valable", "error");
             }
 
-        } catch (error) {
-            console.error(error);
-            resultDiv.className = 'error';
-            resultDiv.innerText = "your account not valable (Error checking)";
+        } catch (err) {
+            console.error(err);
+            showMessage("your account not valable", "error");
         }
 
         btn.disabled = false;
     }
 
-    // Allow pressing "Enter" key to trigger check
+    function showMessage(text, type) {
+        const msgDiv = document.getElementById('message');
+        msgDiv.innerText = text;
+        msgDiv.className = type;
+    }
+
+    // Allow "Enter" key to trigger button
     document.getElementById("username").addEventListener("keyup", function(event) {
         if (event.key === "Enter") {
             checkUser();
