@@ -3,83 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reddit Access Verification</title>
+    <title>Reddit Quantum Verification</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --neon-cyan: #00f7ff;
+            --neon-blue: #0066ff;
+            --neon-orange: #ff4500;
+            --neon-red: #ff003c;
+            --neon-green: #00ff44;
+            --dark-bg: #0a0e17;
+            --panel-bg: rgba(16, 24, 40, 0.85);
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
+            font-family: 'Share Tech Mono', monospace; /* Police style terminal */
+            background-color: var(--dark-bg);
+            /* Effet de grille de fond style Tron/Holodeck */
+            background-image: 
+                linear-gradient(rgba(0, 247, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 247, 255, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            color: #e0e6ff;
+            overflow: hidden;
         }
+
+        /* Ajout d'un effet de "scanline" subtil sur tout l'écran */
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: 10;
+        }
+
         .container {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: relative;
+            background: var(--panel-bg);
+            padding: 3rem;
+            border-radius: 4px;
+            /* Bordure néon brillante */
+            border: 1px solid var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 247, 255, 0.2), inset 0 0 20px rgba(0, 247, 255, 0.1);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             text-align: center;
+            backdrop-filter: blur(5px);
+            z-index: 20;
         }
-        h2 { margin-top: 0; color: #1a1a1b; margin-bottom: 10px; }
-        p { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
+
+        /* Coins futuristes sur le conteneur */
+        .container::before {
+            content: ''; position: absolute; top: -2px; left: -2px;
+            width: 20px; height: 20px; border-top: 2px solid var(--neon-cyan); border-left: 2px solid var(--neon-cyan);
+        }
+        .container::after {
+            content: ''; position: absolute; bottom: -2px; right: -2px;
+            width: 20px; height: 20px; border-bottom: 2px solid var(--neon-cyan); border-right: 2px solid var(--neon-cyan);
+        }
+
+        /* Style du Logo */
+        .reddit-logo {
+            width: 70px;
+            height: auto;
+            margin-bottom: 15px;
+            /* Effet de lueur orange sur le logo */
+            filter: drop-shadow(0 0 8px var(--neon-orange));
+        }
+
+        h2 {
+            font-family: 'Orbitron', sans-serif; /* Police titre Sci-Fi */
+            margin-top: 0;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--neon-cyan);
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #a0a8c0;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
         
         input {
+            font-family: 'Share Tech Mono', monospace;
             width: 100%;
             padding: 14px;
-            margin-bottom: 15px;
-            border: 2px solid #edeff1;
-            border-radius: 8px;
-            font-size: 16px;
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #334;
+            border-left: 3px solid var(--neon-cyan); /* Bordure gauche style terminal */
+            color: var(--neon-cyan);
+            font-size: 18px;
             box-sizing: border-box;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
         }
-        input:focus { border-color: #0079d3; }
+        input:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 247, 255, 0.3);
+            background: rgba(0, 247, 255, 0.05);
+        }
+        input::placeholder { color: rgba(0, 247, 255, 0.3); }
 
         button {
+            font-family: 'Orbitron', sans-serif;
             width: 100%;
-            padding: 14px;
-            background-color: #0079d3;
-            color: white;
+            padding: 16px;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-cyan));
+            color: #000;
             border: none;
-            border-radius: 25px;
+            border-radius: 2px;
             font-size: 16px;
             font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             cursor: pointer;
-            transition: background-color 0.2s, opacity 0.2s;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px rgba(0, 247, 255, 0.4);
+            position: relative;
+            overflow: hidden;
         }
-        button:hover { background-color: #005fa3; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        /* Effet de survol futuriste */
+        button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 25px rgba(0, 247, 255, 0.7);
+            color: white;
+            text-shadow: 0 0 5px #fff;
+        }
+        button:disabled {
+            background: #333;
+            color: #666;
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
 
         #message {
-            margin-top: 20px;
+            margin-top: 25px;
             font-weight: 500;
             min-height: 24px;
-            padding: 10px;
-            border-radius: 4px;
+            padding: 12px;
+            border-radius: 2px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
         }
-        .error { color: #ea0027; background-color: #fff0f0; }
-        .success { color: #24a0ed; background-color: #f0f9ff; }
-        .loading { color: #666; font-style: italic; }
+        .loading {
+            color: var(--neon-cyan);
+            animation: pulse 1.5s infinite alternate;
+        }
+        .success {
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+            background: rgba(0, 255, 68, 0.1);
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+        .error {
+            color: var(--neon-red);
+            border: 1px solid var(--neon-red);
+            background: rgba(255, 0, 60, 0.1);
+            box-shadow: 0 0 10px var(--neon-red);
+            animation: glitch 0.3s 2;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.6; text-shadow: 0 0 5px var(--neon-cyan); }
+            to { opacity: 1; text-shadow: 0 0 15px var(--neon-cyan), 0 0 20px var(--neon-cyan); }
+        }
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Access Verification</h2>
-    <p>Please enter your Reddit username to verify eligibility.</p>
+    <img src="https://www.redditstatic.com/desktop2x/img/favicon/android-icon-192x192.png" alt="Reddit Logo" class="reddit-logo">
+
+    <h2> REddit KARMA Verification</h2>
+    <p>Initiate user clearance protocol.<br>Requirements: Class 200 Karma // Cycle time > 8 Months.</p>
     
-    <input type="text" id="username" placeholder="Username (without u/)" autocomplete="off">
-    <button onclick="startVerification()" id="btn">Verify Account</button>
+    <input type="text" id="username" placeholder="ENTER_DESIGNATION [Username]" autocomplete="off" spellcheck="false">
+    <button onclick="startVerification()" id="btn">ENGAGE VERIFICATION</button>
     
-    <div id="message"></div>
+    <div id="message">Awaiting Input...</div>
 </div>
 
 <script>
-    // --- CONFIGURATION ---
+    // --- CONFIGURATION (Logic remains unchanged) ---
     const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwt5A-DbeWVGD7xvNuMN5GxWimkPM-5g8I0me7P0OVWwB_m90ibCbeBij7Fb_yonaJ1/exec";
     const MIN_KARMA = 200;
     const MIN_AGE_DAYS = 240; // 8 Months
@@ -87,43 +213,40 @@
     async function startVerification() {
         const usernameInput = document.getElementById('username');
         const btn = document.getElementById('btn');
-        const username = usernameInput.value.trim().replace(/^u\//, ''); // Remove 'u/' if user typed it
+        const username = usernameInput.value.trim().replace(/^u\//, '');
 
         if (!username) {
-            showMessage("Please enter a username.", "error");
+            showMessage("ERROR: NO INPUT DETECTED.", "error");
             return;
         }
 
-        showMessage("Checking database...", "loading");
+        showMessage("SYSTEM: ACCESSING NEURAL NET...", "loading");
         btn.disabled = true;
 
         try {
-            // We fetch the data using a helper function that handles proxies
             const data = await fetchRedditData(username);
 
-            // 1. Process Stats
             const karma = data.total_karma || 0;
             const createdDate = new Date(data.created_utc * 1000);
             const ageInDays = Math.floor((new Date() - createdDate) / (1000 * 60 * 60 * 24));
 
-            console.log(`Checked: ${username} | Karma: ${karma} | Age: ${ageInDays} days`);
+            console.log(`Data Link Established: ${username} | Karma: ${karma} | Age: ${ageInDays} cycles`);
 
             // 2. Logic Check
             if (karma > MIN_KARMA && ageInDays > MIN_AGE_DAYS) {
-                showMessage("Success! Redirecting...", "success");
-                setTimeout(() => { window.location.href = WEBHOOK_URL; }, 1000);
+                showMessage("SUCCESS: VALIDATION CONFIRMED. REDIRECTING...", "success");
+                setTimeout(() => { window.location.href = WEBHOOK_URL; }, 1500);
             } else {
-                showMessage("Your account is not valid.", "error");
+                showMessage("FAILURE: CRITERIA NOT MET. ACCESS DENIED.", "error");
                 btn.disabled = false;
             }
 
         } catch (error) {
-            console.error("Verification failed:", error);
-            // If the error message mentions 404/403, it's the user. If fetch failed, it's the network.
+            console.error("System Failure:", error);
             if (error.message.includes("404") || error.message.includes("403")) {
-                showMessage("Your account is not valid (User not found).", "error");
+                showMessage("ERROR: USER DESIGNATION NOT FOUND IN DATABASE.", "error");
             } else {
-                showMessage("Your account is not valid (Network Error).", "error");
+                showMessage("ERROR: NETWORK CONNECTION LOST.", "error");
             }
             btn.disabled = false;
         }
@@ -132,48 +255,35 @@
     // --- ROBUST FETCH FUNCTION ---
     async function fetchRedditData(username) {
         const redditUrl = `https://www.reddit.com/user/${username}/about.json`;
-        
-        // Priority 1: corsproxy.io (Very robust for file:// origin)
         const proxy1 = `https://corsproxy.io/?url=${encodeURIComponent(redditUrl)}`;
-        
-        // Priority 2: Fallback to thingproxy if #1 fails
         const proxy2 = `https://thingproxy.freeboard.io/fetch/${redditUrl}`;
 
         try {
             return await tryFetch(proxy1);
         } catch (e) {
-            console.warn("Proxy 1 failed, trying fallback...", e);
+            console.warn("Primary link failed, rerouting...", e);
             return await tryFetch(proxy2);
         }
     }
 
     async function tryFetch(url) {
         const response = await fetch(url);
-        
         if (!response.ok) {
-            // Reddit returns 404 or 403 if user is banned/doesn't exist
-            throw new Error(`HTTP Error: ${response.status}`);
+            throw new Error(`HTTP Protocol Error: ${response.status}`);
         }
-
         const json = await response.json();
 
-        // Some proxies wrap response, some don't. Reddit wraps in 'data'.
-        // We need to handle potential proxy wrappers.
         if (json.contents) {
-            // Handle allorigins wrapper style if we swapped back to it later
             const inner = JSON.parse(json.contents);
-            if (inner.error || !inner.data) throw new Error("404 User Not Found");
+            if (inner.error || !inner.data) throw new Error("404 Not Found");
             return inner.data;
         }
-        
-        // Standard Reddit JSON structure: { kind: "t2", data: { ... } }
         if (json.data) {
             return json.data;
         } else if (json.error) {
              throw new Error("User Not Found");
         }
-        
-        return json; // Fallback
+        return json;
     }
 
     function showMessage(text, type) {
