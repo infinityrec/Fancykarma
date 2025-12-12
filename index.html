@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reddit Account Checker</title>
+    <title>Reddit Access Verification</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -23,149 +23,167 @@
             max-width: 400px;
             text-align: center;
         }
-        h2 { margin-top: 0; color: #333; }
-        p { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        h2 { margin-top: 0; color: #1a1a1b; margin-bottom: 10px; }
+        p { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5; }
         
         input {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+            border: 2px solid #edeff1;
+            border-radius: 8px;
             font-size: 16px;
             box-sizing: border-box;
             outline: none;
-            transition: border 0.3s;
+            transition: border-color 0.2s;
         }
-        input:focus { border-color: #ff4500; }
+        input:focus { border-color: #0079d3; }
 
         button {
             width: 100%;
-            padding: 12px;
-            background-color: #ff4500; /* Reddit Orange */
+            padding: 14px;
+            background-color: #0079d3;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 25px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, opacity 0.2s;
         }
-        button:hover { background-color: #e03d00; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        button:hover { background-color: #005fa3; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
 
         #message {
             margin-top: 20px;
             font-weight: 500;
             min-height: 24px;
+            padding: 10px;
+            border-radius: 4px;
         }
-        .error { color: #d93025; }
-        .success { color: #188038; }
-        .loading { color: #666; }
+        .error { color: #ea0027; background-color: #fff0f0; }
+        .success { color: #24a0ed; background-color: #f0f9ff; }
+        .loading { color: #666; font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Reddit Access Check</h2>
-    <p>Enter username to verify eligibility<br>(>200 Karma & >8 Months old)</p>
+    <h2>Access Verification</h2>
+    <p>Please enter your Reddit username to verify eligibility.</p>
     
-    <input type="text" id="username" placeholder="Reddit Username (e.g. spez)" autocomplete="off">
-    <button onclick="checkUser()" id="btn">Verify Account</button>
+    <input type="text" id="username" placeholder="Username (without u/)" autocomplete="off">
+    <button onclick="startVerification()" id="btn">Verify Account</button>
     
     <div id="message"></div>
 </div>
 
 <script>
-    // Configuration
+    // --- CONFIGURATION ---
     const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwt5A-DbeWVGD7xvNuMN5GxWimkPM-5g8I0me7P0OVWwB_m90ibCbeBij7Fb_yonaJ1/exec";
     const MIN_KARMA = 200;
-    const MIN_AGE_DAYS = 240; // Approx 8 months
+    const MIN_AGE_DAYS = 240; // 8 Months
 
-    async function checkUser() {
+    async function startVerification() {
         const usernameInput = document.getElementById('username');
-        const msgDiv = document.getElementById('message');
         const btn = document.getElementById('btn');
-        const username = usernameInput.value.trim();
+        const username = usernameInput.value.trim().replace(/^u\//, ''); // Remove 'u/' if user typed it
 
-        // Basic Validation
         if (!username) {
-            showMessage("Please enter a username", "error");
+            showMessage("Please enter a username.", "error");
             return;
         }
 
-        // Set Loading State
-        showMessage("Checking account details...", "loading");
+        showMessage("Checking database...", "loading");
         btn.disabled = true;
 
         try {
-            // Use CORS Proxy to bypass browser restrictions on Reddit API
-            // Reddit API URL: https://www.reddit.com/user/{username}/about.json
-            const targetUrl = `https://www.reddit.com/user/${username}/about.json`;
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+            // We fetch the data using a helper function that handles proxies
+            const data = await fetchRedditData(username);
 
-            const response = await fetch(proxyUrl);
-            const proxyData = await response.json();
+            // 1. Process Stats
+            const karma = data.total_karma || 0;
+            const createdDate = new Date(data.created_utc * 1000);
+            const ageInDays = Math.floor((new Date() - createdDate) / (1000 * 60 * 60 * 24));
 
-            if (!proxyData.contents) {
-                throw new Error("Network error via proxy");
-            }
+            console.log(`Checked: ${username} | Karma: ${karma} | Age: ${ageInDays} days`);
 
-            // Parse the actual JSON returned by Reddit
-            const redditData = JSON.parse(proxyData.contents);
-
-            // Check if user exists (Reddit returns 'error' key if not found/banned)
-            if (redditData.error || !redditData.data) {
-                showMessage("your account not valable", "error");
-                btn.disabled = false;
-                return;
-            }
-
-            const userData = redditData.data;
-
-            // 1. Get Karma (Link + Comment)
-            const karma = userData.total_karma || 0;
-
-            // 2. Calculate Age
-            // Reddit gives created_utc in seconds, JS needs milliseconds
-            const createdDate = new Date(userData.created_utc * 1000);
-            const today = new Date();
-            const ageInTime = today.getTime() - createdDate.getTime();
-            const ageInDays = Math.floor(ageInTime / (1000 * 3600 * 24));
-
-            console.log(`User: ${username} | Karma: ${karma} | Age: ${ageInDays} days`);
-
-            // 3. Logic Check
+            // 2. Logic Check
             if (karma > MIN_KARMA && ageInDays > MIN_AGE_DAYS) {
-                showMessage(">> Valable! Redirecting...", "success");
-                
-                // Redirect after 1.5 seconds so user sees success message
-                setTimeout(() => {
-                    window.location.href = WEBHOOK_URL;
-                }, 1500);
+                showMessage("Success! Redirecting...", "success");
+                setTimeout(() => { window.location.href = WEBHOOK_URL; }, 1000);
             } else {
-                showMessage("your account not valable", "error");
+                showMessage("Your account is not valid.", "error");
+                btn.disabled = false;
             }
 
-        } catch (err) {
-            console.error(err);
-            showMessage("your account not valable", "error");
+        } catch (error) {
+            console.error("Verification failed:", error);
+            // If the error message mentions 404/403, it's the user. If fetch failed, it's the network.
+            if (error.message.includes("404") || error.message.includes("403")) {
+                showMessage("Your account is not valid (User not found).", "error");
+            } else {
+                showMessage("Your account is not valid (Network Error).", "error");
+            }
+            btn.disabled = false;
+        }
+    }
+
+    // --- ROBUST FETCH FUNCTION ---
+    async function fetchRedditData(username) {
+        const redditUrl = `https://www.reddit.com/user/${username}/about.json`;
+        
+        // Priority 1: corsproxy.io (Very robust for file:// origin)
+        const proxy1 = `https://corsproxy.io/?url=${encodeURIComponent(redditUrl)}`;
+        
+        // Priority 2: Fallback to thingproxy if #1 fails
+        const proxy2 = `https://thingproxy.freeboard.io/fetch/${redditUrl}`;
+
+        try {
+            return await tryFetch(proxy1);
+        } catch (e) {
+            console.warn("Proxy 1 failed, trying fallback...", e);
+            return await tryFetch(proxy2);
+        }
+    }
+
+    async function tryFetch(url) {
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            // Reddit returns 404 or 403 if user is banned/doesn't exist
+            throw new Error(`HTTP Error: ${response.status}`);
         }
 
-        btn.disabled = false;
+        const json = await response.json();
+
+        // Some proxies wrap response, some don't. Reddit wraps in 'data'.
+        // We need to handle potential proxy wrappers.
+        if (json.contents) {
+            // Handle allorigins wrapper style if we swapped back to it later
+            const inner = JSON.parse(json.contents);
+            if (inner.error || !inner.data) throw new Error("404 User Not Found");
+            return inner.data;
+        }
+        
+        // Standard Reddit JSON structure: { kind: "t2", data: { ... } }
+        if (json.data) {
+            return json.data;
+        } else if (json.error) {
+             throw new Error("User Not Found");
+        }
+        
+        return json; // Fallback
     }
 
     function showMessage(text, type) {
-        const msgDiv = document.getElementById('message');
-        msgDiv.innerText = text;
-        msgDiv.className = type;
+        const div = document.getElementById('message');
+        div.innerText = text;
+        div.className = type;
     }
 
-    // Allow "Enter" key to trigger button
-    document.getElementById("username").addEventListener("keyup", function(event) {
-        if (event.key === "Enter") {
-            checkUser();
-        }
+    document.getElementById("username").addEventListener("keyup", (e) => {
+        if (e.key === "Enter") startVerification();
     });
 </script>
 
