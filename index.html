@@ -1,97 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Reddit Karma Checker</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    body {
-      background-color: #fafafa;
-      font-family: 'Poppins', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .card {
-      background: white;
-      border-radius: 20px;
-      padding: 40px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-      text-align: center;
-      max-width: 400px;
-      width: 90%;
-    }
-    .card img {
-      width: 60px;
-      margin-bottom: 20px;
-    }
-    h2 {
-      font-size: 24px;
-      margin: 0 0 10px;
-    }
-    p {
-      font-size: 14px;
-      color: #555;
-      margin: 0 0 30px;
-    }
-    button {
-      background-color: #FF4500;
-      color: white;
-      border: none;
-      padding: 14px 28px;
-      font-size: 16px;
-      font-weight: 600;
-      border-radius: 10px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: background-color 0.3s ease;
-    }
-    button:active {
-      background-color: #d63b00;
-    }
-    button::after {
-      content: '';
-      display: block;
-      position: absolute;
-      border-radius: 10px;
-      top: 0;
-      left: 0;
-      width: 0%;
-      height: 100%;
-      background: rgba(255,255,255,0.2);
-      transition: width 0.6s ease;
-      z-index: 0;
-    }
-    button:focus::after {
-      width: 100%;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reddit Account Checker</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        h2 {
+            margin-top: 0;
+            color: #1c1c1c;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box; /* Ensures padding doesn't break width */
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #ff4500; /* Reddit Orange */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #e03d00;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #result {
+            margin-top: 20px;
+            font-weight: bold;
+            min-height: 24px;
+        }
+        .error {
+            color: #d93025;
+        }
+        .success {
+            color: #188038;
+        }
+        .loading {
+            color: #666;
+        }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <img src="https://redditinc.com/hs-fs/hubfs/Reddit%20Inc/Content/Brand%20Page/Reddit_Logo.png" alt="Reddit logo">
-    <h2>Verification</h2>
-    <p>We need to first verify that you got the right<br>Karma, Account age.</p>
-    <button onclick="login()">
-      <span>:lock:</span> Login with Reddit
-    </button>
-  </div>
 
-  <script>
-    function login() {
-      const clientId = ""; // Your actual Reddit client ID
-      const redirectUri = "https://infinityrec.github.io/Fancykarma/redirect.html";
-      const state = Math.random().toString(36).substring(2);
-      const scope = "identity history";
+<div class="card">
+    <h2>Reddit Checker</h2>
+    <p>Check if account is > 8 months old and has > 200 Karma.</p>
+    
+    <input type="text" id="username" placeholder="Enter Reddit Username" autocomplete="off">
+    <button onclick="checkUser()" id="checkBtn">Check Account</button>
+    
+    <div id="result"></div>
+</div>
 
-      const authUrl = `https://www.reddit.com/api/v1/authorize?client_id=${clientId}&response_type=code&state=${state}&redirect_uri=${redirectUri}&duration=temporary&scope=${scope}`;
-      window.location.href = authUrl;
+<script>
+    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwt5A-DbeWVGD7xvNuMN5GxWimkPM-5g8I0me7P0OVWwB_m90ibCbeBij7Fb_yonaJ1/exec";
+
+    async function checkUser() {
+        const usernameInput = document.getElementById('username');
+        const resultDiv = document.getElementById('result');
+        const btn = document.getElementById('checkBtn');
+        
+        const username = usernameInput.value.trim();
+
+        if (!username) {
+            resultDiv.className = 'error';
+            resultDiv.innerText = "Please enter a username.";
+            return;
+        }
+
+        // UI Reset
+        resultDiv.className = 'loading';
+        resultDiv.innerText = "Checking...";
+        btn.disabled = true;
+
+        try {
+            // We use a CORS Proxy (allorigins) to bypass Reddit's browser blocking
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.reddit.com/user/${username}/about.json`)}`;
+            
+            const response = await fetch(proxyUrl);
+            const dataWrapper = await response.json();
+            
+            // The proxy returns the actual Reddit data inside a "contents" string
+            if (!dataWrapper.contents) {
+                throw new Error("No data returned");
+            }
+            
+            const redditData = JSON.parse(dataWrapper.contents);
+
+            // Check if user exists (Reddit returns 'error' key if banned/not found)
+            if (redditData.error || !redditData.data) {
+                resultDiv.className = 'error';
+                resultDiv.innerText = "your account not valable (User not found)";
+                btn.disabled = false;
+                return;
+            }
+
+            const userData = redditData.data;
+
+            // 1. Get Stats
+            const karma = userData.total_karma || 0;
+            const createdUtc = userData.created_utc;
+
+            // 2. Calculate Age
+            const now = new Date();
+            const accountDate = new Date(createdUtc * 1000); // JS uses milliseconds
+            const ageInMs = now - accountDate;
+            const ageInDays = Math.floor(ageInMs / (1000 * 60 * 60 * 24));
+
+            console.log(`User: ${username}, Karma: ${karma}, Age: ${ageInDays} days`);
+
+            // 3. Logic Check (>200 Karma AND >240 Days)
+            if (karma > 200 && ageInDays > 240) {
+                resultDiv.className = 'success';
+                resultDiv.innerText = ">> Valable! Redirecting...";
+                
+                // Redirect after a short delay so user sees the success message
+                setTimeout(() => {
+                    window.location.href = WEBHOOK_URL;
+                }, 1000);
+            } else {
+                resultDiv.className = 'error';
+                resultDiv.innerText = "your account not valable";
+            }
+
+        } catch (error) {
+            console.error(error);
+            resultDiv.className = 'error';
+            resultDiv.innerText = "your account not valable (Error checking)";
+        }
+
+        btn.disabled = false;
     }
-  </script>
+
+    // Allow pressing "Enter" key to trigger check
+    document.getElementById("username").addEventListener("keyup", function(event) {
+        if (event.key === "Enter") {
+            checkUser();
+        }
+    });
+</script>
+
 </body>
 </html>
